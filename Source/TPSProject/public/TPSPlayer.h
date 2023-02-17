@@ -11,6 +11,7 @@ class UCameraComponent;
 class USkeletalMeshComponent;
 class UStaticMeshComponent;
 class UUSerWidget;
+class UParticleSystem;
 
 UCLASS()
 class TPSPROJECT_API ATPSPlayer : public ACharacter
@@ -77,5 +78,15 @@ public:
 	TSubclassOf<class UUserWidget> sniperUIFactory;
 	
 	UUserWidget* _sniperUI;
+
+	// 총알 파편효과 공장
+	UPROPERTY(EditAnywhere, Category = BulletEffect)
+	UParticleSystem* bulletEffectFactroy;
+
+	// 일반 조준 크로스헤어ui 위젯
+	UPROPERTY(EditDefaultsOnly, Category = SniperUI)
+	TSubclassOf<class UUserWidget> crosshairUIFactory;
+
+	UUserWidget* _crosshairUI;
 
 };

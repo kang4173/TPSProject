@@ -45,7 +45,9 @@ public:
 	void LookUp(float value);
 
 	UPROPERTY(VisibleAnywhere, Category = PlayerSetting)
-	float walkSpeed = 600;
+	float walkSpeed = 200;
+	UPROPERTY(VisibleAnywhere, Category = PlayerSetting)
+	float runSpeed = 600;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
 	FVector direction;
@@ -88,5 +90,8 @@ public:
 	TSubclassOf<class UUserWidget> crosshairUIFactory;
 
 	UUserWidget* _crosshairUI;
+
+	// 달리기 이벤트 처리 함수
+	void InputRun();
 
 };

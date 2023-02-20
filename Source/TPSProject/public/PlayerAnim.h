@@ -17,7 +17,14 @@ class TPSPROJECT_API UPlayerAnim : public UAnimInstance
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = PlayerAnim)
 	float speed = 0;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = PlayerAnim)
+	float direction = 0;
 
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+	// 플레이어가 공중에 있는지 여부
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = PlayerAnim)
+	bool inInAir = false;
+
 
 };

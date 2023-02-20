@@ -59,5 +59,26 @@ public:
 	// 경과시간
 	float currentTime = 0;
 
+	UPROPERTY(EditDefaultsOnly, Category = FSM)
+	class ATPSPlayer* target;
+	UPROPERTY()
+	class AEnemy* me;
+
+	UPROPERTY(EditAnywhere, Category = FSM)
+	float attackRange = 150.0f;
+
+	UPROPERTY(EditAnywhere, Category = FSM)
+	float attackDelayTime = 2.0f;
+	
+	void OnDamageProcess();
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = FSM)
+	int32 hp = 3;
+	UPROPERTY(EditAnywhere, Category = FSM)
+	float damageDelayTime = 2.0f;
+	// 아래로 사라지는 속도
+	UPROPERTY(EditAnywhere, Category = FSM)
+	float dieSpeed = 50.0f;
+
 
 };

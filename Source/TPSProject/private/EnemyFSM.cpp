@@ -3,6 +3,13 @@
 
 #include "EnemyFSM.h"
 
+#include "TPSPlayer.h"
+#include "Enemy.h"
+#include <Kismet/GameplayStatics.h>
+#include "TPSProject.h"
+#include <Components/CapsuleComponent.h>
+
+
 // Sets default values for this component's properties
 UEnemyFSM::UEnemyFSM()
 {
@@ -19,7 +26,12 @@ void UEnemyFSM::BeginPlay()
 {
 	Super::BeginPlay();
 
-	
+	// 월드에서 ATPSPlayer 타깃 찾아오기
+	auto actor = UGameplayStatics::GetActorOfClass(GetWorld(), ATPSPlayer::StaticClass());
+	// ATPSPlayer 타입으로 캐스팅
+	target = Cast<ATPSPlayer>(actor);
+	// 소유 객체 가져오기
+	me = Cast<AEnemy>(GetOwner());
 	
 }
 
@@ -31,7 +43,6 @@ void UEnemyFSM::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 
 	switch(mState)
 	{
-			break;
 		case EEnemyState::Idle:
 			IdleState();   
 			break;
@@ -66,19 +77,78 @@ void UEnemyFSM::IdleState()
 
 void UEnemyFSM::MoveState()
 {
-	
+	// 1. 타깃 목적지 
+	FVector destination = target->GetActorLocation();
+	// 2. 방향
+	FVector dir = destination - me->GetActorLocation();
+	// 3. 방향으로 이동
+	me->AddMovementInput(dir.GetSafeNormal());
+
+	// 1. 거리가 공격 범위 안에 들어오면
+	if (dir.Size() < attackRange)
+	{
+		// 2. 공격 상태로 전환
+		mState = EEnemyState::Attack;
+	}
 }
 
 void UEnemyFSM::AttackState()
 {
-
+	currentTime += GetWorld()->DeltaTimeSeconds;
+	
+	if (currentTime > attackDelayTime)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15, FColor::Black, TEXT("ATTACK!!!"));
+		currentTime = 0;
+	}
+	
+	// 1. 타깃과의 거리
+	float distance = FVector::Distance(target->GetActorLocation(), me->GetActorLocation());
+	// 2. 타깃과의 거리가 범위를 벗어나면
+	if (distance > attackRange)
+	{
+		mState = EEnemyState::Move;
+	}
 }
 
 void UEnemyFSM::DamageState()
 {
+	currentTime += GetWorld()->DeltaTimeSeconds;
+
+	if (currentTime > damageDelayTime)
+	{
+		mState = EEnemyState::Idle;
+
+		currentTime = 0;
+	}
 }
 
 void UEnemyFSM::DieState()
 {
+	//계속 아래로 내려가고 싶다.
+	FVector P0 = me->GetActorLocation();
+	FVector vt = FVector::DownVector * dieSpeed * GetWorld()->DeltaTimeSeconds;
+	FVector P = P0 + vt;
+	me->SetActorLocation(P);
+
+	if (P.Z > 200.0f)
+	{
+		me->Destroy();
+	}
+}
+
+void UEnemyFSM::OnDamageProcess()
+{
+	hp--;
+	if (hp > 0)
+	{
+		mState = EEnemyState::Damage;
+	}
+	else
+	{
+		mState = EEnemyState::Die;
+		// 캡슐 충돌체 비활성화
+		me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	}
 }
 

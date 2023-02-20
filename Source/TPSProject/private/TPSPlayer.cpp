@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include <Blueprint/UserWidget.h>
 #include <Kismet/GameplayStatics.h>
+#include "EnemyFSM.h"
 
 #include "Bullet.h"
 
@@ -17,7 +18,7 @@ ATPSPlayer::ATPSPlayer()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ConstructorHelpers::FObjectFinder<USkeletalMesh> BornMesh(TEXT
-	("SkeletalMesh'/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin'"));
+	("SkeletalMesh'/Game/AnimStarterPack/UE4_Mannequin/Mesh/SK_Mannequin.SK_Mannequin'"));
 	if (BornMesh.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(BornMesh.Object);
@@ -180,6 +181,14 @@ void ATPSPlayer::InputFire()
 				// 3. 그 방향으로 날림
 				hitComp->AddForce(force);
 			}
+			// 부딪힌 대상이 적인지 판단
+			auto enemy = hitInfo.GetActor()->GetDefaultSubobjectByName(TEXT("FSM"));
+			if (enemy)
+			{
+				auto enemyFSM = Cast<UEnemyFSM>(enemy);
+					enemyFSM->OnDamageProcess();
+			}
+
 		}
 	}
 }

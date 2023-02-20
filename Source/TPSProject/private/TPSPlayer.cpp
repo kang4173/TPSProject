@@ -9,6 +9,7 @@
 #include <Kismet/GameplayStatics.h>
 #include "EnemyFSM.h"
 #include <GameFramework/CharacterMovementComponent.h>
+#include "PlayerAnim.h"
 
 #include "Bullet.h"
 
@@ -148,6 +149,10 @@ void ATPSPlayer::Move()
 
 void ATPSPlayer::InputFire()
 {
+	// 공격 애니메이션 재생
+	auto anim = Cast<UPlayerAnim>(GetMesh()->GetAnimInstance());
+	anim->PlayAttackAnim();
+
 	// 유탄 총 사용 시
 	if (bUSingGrenadeGun)
 	{
@@ -196,6 +201,7 @@ void ATPSPlayer::InputFire()
 
 		}
 	}
+	
 }
 
 

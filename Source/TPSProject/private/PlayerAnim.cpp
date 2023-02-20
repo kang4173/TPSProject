@@ -29,3 +29,8 @@ void UPlayerAnim::NativeUpdateAnimation(float DeltaSeconds)
         inInAir = movement->IsFalling();
     }
 }
+
+void UPlayerAnim::PlayAttackAnim()
+{
+    Montage_Play(attackAnimMontage);
+}

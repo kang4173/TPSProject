@@ -18,4 +18,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = PlayerAnim)
 	float speed = 0;
 
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
 };

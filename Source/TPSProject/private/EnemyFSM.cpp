@@ -8,6 +8,7 @@
 #include <Kismet/GameplayStatics.h>
 #include "TPSProject.h"
 #include <Components/CapsuleComponent.h>
+#include "EnemyAnim.h"
 
 
 // Sets default values for this component's properties
@@ -32,7 +33,10 @@ void UEnemyFSM::BeginPlay()
 	target = Cast<ATPSPlayer>(actor);
 	// 소유 객체 가져오기
 	me = Cast<AEnemy>(GetOwner());
-	
+
+	// UEnemyAnim* 할당
+	anim = Cast<UEnemyAnim>(me->GetMesh()->GetAnimInstance());
+
 }
 
 
@@ -72,6 +76,8 @@ void UEnemyFSM::IdleState()
 		mState = EEnemyState::Move;
 		// 4. 경과시간 초기화
 		currentTime = 0;
+		// 애니메이션 상태 동기화
+		anim->animState = mState;
 	}
 }
 
@@ -89,6 +95,12 @@ void UEnemyFSM::MoveState()
 	{
 		// 2. 공격 상태로 전환
 		mState = EEnemyState::Attack;
+		// 애니메이션 상태 동기화
+		anim->animState = mState;
+		// 공격 애니메이션 재생 활성화
+		anim->bAttackPlay = true;
+		// 공격 상태 전환 시 대기시간이 바로 끝나도록 처리
+		currentTime = attackDelayTime;
 	}
 }
 
@@ -100,6 +112,7 @@ void UEnemyFSM::AttackState()
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 15, FColor::Black, TEXT("ATTACK!!!"));
 		currentTime = 0;
+		anim->bAttackPlay = true;
 	}
 	
 	// 1. 타깃과의 거리
@@ -108,6 +121,8 @@ void UEnemyFSM::AttackState()
 	if (distance > attackRange)
 	{
 		mState = EEnemyState::Move;
+		// 애니메이션 상태 동기화
+		anim->animState = mState;
 	}
 }
 
@@ -120,6 +135,8 @@ void UEnemyFSM::DamageState()
 		mState = EEnemyState::Idle;
 
 		currentTime = 0;
+		// 애니메이션 상태 동기화
+		anim->animState = mState;
 	}
 }
 
@@ -150,5 +167,7 @@ void UEnemyFSM::OnDamageProcess()
 		// 캡슐 충돌체 비활성화
 		me->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
+	// 애니메이션 상태 동기화
+	anim->animState = mState;
 }
 

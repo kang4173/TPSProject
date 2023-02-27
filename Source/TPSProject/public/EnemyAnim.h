@@ -12,6 +12,9 @@
 /**
  * 
  */
+
+
+
 UCLASS()
 class TPSPROJECT_API UEnemyAnim : public UAnimInstance
 {
@@ -24,6 +27,7 @@ public:
 	// 공격 상태 재생 여부 변수
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = FSM)
 	bool bAttackPlay = false;
-
-
+	// 공격 애니메이션 끝나는 함수
+	UFUNCTION(BlueprintCallable, Category = FSMEvent)
+	void OnEndAttackAnimation();
 };

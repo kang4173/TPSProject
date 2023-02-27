@@ -4,6 +4,7 @@
 #include "Enemy.h"
 
 #include "EnemyFSM.h"
+#include "Animation/AnimInstance.h"
 
 // Sets default values
 AEnemy::AEnemy()
@@ -12,15 +13,24 @@ AEnemy::AEnemy()
 	PrimaryActorTick.bCanEverTick = true;
 
 	ConstructorHelpers::FObjectFinder<USkeletalMesh>tempMesh(TEXT
-	("SkeletalMesh'/Game/Mannequin/Character/Mesh/SK_Mannequin_Female.SK_Mannequin_Female'"));
+	("SkeletalMesh'/Game/Enemy/Model/vampire_a_lusth.vampire_a_lusth'"));
 
 	if (tempMesh.Succeeded())
 	{
 		GetMesh()->SetSkeletalMesh(tempMesh.Object);
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0, 0, -88), FRotator(0, -90, 0));
+		GetMesh()->SetRelativeScale3D(FVector(0.84f));
 	}
 	
 	fsm = CreateDefaultSubobject<UEnemyFSM>(TEXT("FSM"));
+	
+	// 애니메이션 블루프린트 할당하기 
+	// (ABP_Enemy 뒤에 _C 를 붙어야 블루프린트 클래스로 인식하기 때문에 _C 가 없으면 읽기 오류가 발생)
+	ConstructorHelpers::FClassFinder<UAnimInstance>tempClass(TEXT("AnimBlueprint'/Game/Blueprints/ABP_Enemy.ABP_Enemy_C'"));
+	if (tempClass.Succeeded())
+	{
+		GetMesh()->SetAnimInstanceClass(tempClass.Class);
+	}
 	
 }
 

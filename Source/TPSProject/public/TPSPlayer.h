@@ -12,6 +12,7 @@ class USkeletalMeshComponent;
 class UStaticMeshComponent;
 class UUSerWidget;
 class UParticleSystem;
+class USoundBase;
 
 UCLASS()
 class TPSPROJECT_API ATPSPlayer : public ACharacter
@@ -97,5 +98,9 @@ public:
 	// 카메라 셰이크 블루프린트 저장 변수
 	UPROPERTY(EditDefaultsOnly, Category = CameraMotion)
 	TSubclassOf<class UCameraShakeBase> cameraShake;
+
+	// 총 발사 사운드 재생
+	UPROPERTY(EditDefaultsOnly, Category = Sound)
+	USoundBase* bulletSound;
 
 };

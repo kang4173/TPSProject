@@ -11,6 +11,7 @@
 #include <GameFramework/CharacterMovementComponent.h>
 #include "PlayerAnim.h"
 
+
 #include "Bullet.h"
 
 // Sets default values
@@ -63,6 +64,13 @@ ATPSPlayer::ATPSPlayer()
 		sniperGunComp->SetRelativeRotation(FRotator(0, 90, 0));
 		sniperGunComp->SetRelativeScale3D(FVector(0.15f));
 	}
+	
+	ConstructorHelpers::FObjectFinder<USoundBase> tempSound(TEXT("SoundWave'/Game/SniperGun/Rifle.Rifle'"));
+	if (tempSound.Succeeded())
+	{
+		bulletSound = tempSound.Object;
+	}
+
 }
 
 // Called when the game starts or when spawned
@@ -150,6 +158,8 @@ void ATPSPlayer::Move()
 
 void ATPSPlayer::InputFire()
 {
+	UGameplayStatics::PlaySound2D(GetWorld(), bulletSound);
+
 	// 카메라 셰이크 재생
 	auto controller = GetWorld()->GetFirstPlayerController();
 	controller->PlayerCameraManager->StartCameraShake(cameraShake);

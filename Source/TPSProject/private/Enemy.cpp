@@ -24,7 +24,7 @@ AEnemy::AEnemy()
 	
 	fsm = CreateDefaultSubobject<UEnemyFSM>(TEXT("FSM"));
 	
-	// 애니메이션 블루프린트 할당하기 
+	// 애니메이션 블루프린트 할당
 	// (ABP_Enemy 뒤에 _C 를 붙어야 블루프린트 클래스로 인식하기 때문에 _C 가 없으면 읽기 오류가 발생)
 	ConstructorHelpers::FClassFinder<UAnimInstance>tempClass(TEXT("AnimBlueprint'/Game/Blueprints/ABP_Enemy.ABP_Enemy_C'"));
 	if (tempClass.Succeeded())

@@ -83,4 +83,8 @@ public:
 	UPROPERTY()
 	class UEnemyAnim* anim;
 
+	// Enemy를 소유하고있는 AIController
+	UPROPERTY()
+	class AAIController* ai;
+
 };

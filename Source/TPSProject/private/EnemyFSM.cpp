@@ -9,6 +9,7 @@
 #include "TPSProject.h"
 #include <Components/CapsuleComponent.h>
 #include "EnemyAnim.h"
+#include <AIController.h>
 
 
 // Sets default values for this component's properties
@@ -36,6 +37,9 @@ void UEnemyFSM::BeginPlay()
 
 	// UEnemyAnim* 할당
 	anim = Cast<UEnemyAnim>(me->GetMesh()->GetAnimInstance());
+
+	// AAIController 할당
+	ai = Cast<AAIController>(me->GetController());
 
 }
 
@@ -88,7 +92,9 @@ void UEnemyFSM::MoveState()
 	// 2. 방향
 	FVector dir = destination - me->GetActorLocation();
 	// 3. 방향으로 이동
-	me->AddMovementInput(dir.GetSafeNormal());
+	//me->AddMovementInput(dir.GetSafeNormal());
+	// 기존 AddMovementInput 는 직선 방향이라 벽에 막힘
+	ai->MoveToLocation(destination);
 
 	// 1. 거리가 공격 범위 안에 들어오면
 	if (dir.Size() < attackRange)

@@ -10,6 +10,7 @@
 #include <Components/CapsuleComponent.h>
 #include "EnemyAnim.h"
 #include <AIController.h>
+#include <NavigationSystem.h>
 
 
 // Sets default values for this component's properties
@@ -192,5 +193,16 @@ void UEnemyFSM::OnDamageProcess()
 	}
 	// 애니메이션 상태 동기화
 	anim->animState = mState;
+}
+
+// 랜덤위치 가져오기
+bool UEnemyFSM::GetRandomPositionInNavMesh(FVector centerLocation, float radius, FVector& dest)
+{
+	auto ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+	FNavLocation loc;
+	bool result = ns->GetRandomReachablePointInRadius(centerLocation, radius, loc);
+	dest = loc.Location;
+
+	return result;
 }
 

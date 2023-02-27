@@ -144,13 +144,16 @@ void ATPSPlayer::Move()
 //	FVector vt = direction * walkSpeed * DeltaTime;
 //	FVector P = P0 + vt;
 //	SetActorLocation(P);
-	// zeroVecor 값이 000 인지 확인 해볼 것
 	AddMovementInput(direction);
 	direction = FVector::ZeroVector;
 }
 
 void ATPSPlayer::InputFire()
 {
+	// 카메라 셰이크 재생
+	auto controller = GetWorld()->GetFirstPlayerController();
+	controller->PlayerCameraManager->StartCameraShake(cameraShake);
+
 	// 공격 애니메이션 재생
 	auto anim = Cast<UPlayerAnim>(GetMesh()->GetAnimInstance());
 	anim->PlayAttackAnim();

@@ -30,4 +30,10 @@ public:
 	// 공격 애니메이션 끝나는 함수
 	UFUNCTION(BlueprintCallable, Category = FSMEvent)
 	void OnEndAttackAnimation();
+	
+	// 피격 애니메이션 재생 함수
+	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
+	void PlayDamageAnim(FName sectionName);
+
+
 };

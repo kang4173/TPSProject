@@ -83,7 +83,10 @@ void UEnemyFSM::IdleState()
 		currentTime = 0;
 		// 애니메이션 상태 동기화
 		anim->animState = mState;
+		// 최초 랜덤한 위치 정해주기
+		GetRandomPositionInNavMesh(me->GetActorLocation(), 500, randomPos);
 	}
+	
 }
 
 void UEnemyFSM::MoveState()
@@ -92,14 +95,48 @@ void UEnemyFSM::MoveState()
 	FVector destination = target->GetActorLocation();
 	// 2. 방향
 	FVector dir = destination - me->GetActorLocation();
-	// 3. 방향으로 이동
+	// 3. 방향으로 이동하고 싶다
 	//me->AddMovementInput(dir.GetSafeNormal());
-	// 기존 AddMovementInput 는 직선 방향이라 벽에 막힘
-	ai->MoveToLocation(destination);
+
+	// NavigationSystem 객체 얻어오기
+	auto ns = UNavigationSystemV1::GetNavigationSystem(GetWorld());
+	
+	// 목적지 길 찾기 경로 데이터 검색
+	FPathFindingQuery query;
+	FAIMoveRequest req;
+	
+	// 목적지에서 인지할 수 있는 범위
+	req.SetAcceptanceRadius(3);
+	req.SetGoalLocation(destination);
+
+	// 길 찾기 위한 쿼리 생성
+	ai->BuildPathfindingQuery(req, query);
+
+	//길 찾기 결과가져오기
+	FPathFindingResult r = ns->FindPathSync(query);
+
+	// 목적지 까지 길찾기 성공 여부 확인
+	if (r.Result == ENavigationQueryResult::Success)
+	{
+		ai->MoveToLocation(destination);
+	}
+	else
+	{
+		// 랜덤 위치 이동
+		auto result = ai->MoveToLocation(randomPos);
+		// 목적지 도착 하면
+		if (result == EPathFollowingRequestResult::AlreadyAtGoal)
+		{
+			// 새로운 랜덤위치 가져오기
+			GetRandomPositionInNavMesh(me->GetActorLocation(), 500, randomPos);
+		}
+	}
 
 	// 1. 거리가 공격 범위 안에 들어오면
 	if (dir.Size() < attackRange)
 	{
+		// 길 찾기 기능 정지
+		ai->StopMovement();
 		// 2. 공격 상태로 전환
 		mState = EEnemyState::Attack;
 		// 애니메이션 상태 동기화
@@ -130,6 +167,8 @@ void UEnemyFSM::AttackState()
 		mState = EEnemyState::Move;
 		// 애니메이션 상태 동기화
 		anim->animState = mState;
+		
+		GetRandomPositionInNavMesh(me->GetActorLocation(), 500, randomPos);
 	}
 }
 
@@ -193,6 +232,8 @@ void UEnemyFSM::OnDamageProcess()
 	}
 	// 애니메이션 상태 동기화
 	anim->animState = mState;
+	// 길 찾기 기능정지
+	ai->StopMovement();
 }
 
 // 랜덤위치 가져오기

@@ -5,14 +5,9 @@
 
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
-#include <Blueprint/UserWidget.h>
-#include <Kismet/GameplayStatics.h>
-#include "EnemyFSM.h"
-#include <GameFramework/CharacterMovementComponent.h>
-#include "PlayerAnim.h"
 
-
-#include "Bullet.h"
+#include "PlayerMove.h"
+#include "PlayerFire.h"
 
 // Sets default values
 ATPSPlayer::ATPSPlayer()
@@ -65,11 +60,9 @@ ATPSPlayer::ATPSPlayer()
 		sniperGunComp->SetRelativeScale3D(FVector(0.15f));
 	}
 	
-	ConstructorHelpers::FObjectFinder<USoundBase> tempSound(TEXT("SoundWave'/Game/SniperGun/Rifle.Rifle'"));
-	if (tempSound.Succeeded())
-	{
-		bulletSound = tempSound.Object;
-	}
+
+	playerMove = CreateDefaultSubobject<UPlayerMove>(TEXT("PlayerMove"));
+	//playerFire = CreateDefaultSubobject<UPlayerFire>(TEXT("PlayerFire"));
 
 }
 
@@ -77,18 +70,6 @@ ATPSPlayer::ATPSPlayer()
 void ATPSPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-	
-	// 초기 속도를 걷기로 설정
-	GetCharacterMovement()->MaxWalkSpeed = walkSpeed;
-
-	// 1. 스나이퍼 ui 위젯생성
-	_sniperUI = CreateWidget(GetWorld(), sniperUIFactory);
-	// 2. 일반 조준ui 크로스헤어 인스턴스 생성
-	_crosshairUI = CreateWidget(GetWorld(), crosshairUIFactory);
-	// 3. 일반 조준ui 등록
-	_crosshairUI->AddToViewport();
-
-	ChangeToSniperGun();
 
 }
 
@@ -97,7 +78,7 @@ void ATPSPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	Move();
+	
 }
 
 // Called to bind functionality to input
@@ -105,177 +86,12 @@ void ATPSPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	PlayerInputComponent->BindAxis(TEXT("Turn"), this, &ATPSPlayer::Turn);
-	PlayerInputComponent->BindAxis(TEXT("LookUp"), this, &ATPSPlayer::LookUp);
-	PlayerInputComponent->BindAxis(TEXT("Horizontal"), this, &ATPSPlayer::Horizontal);
-	PlayerInputComponent->BindAxis(TEXT("Vertical"), this, &ATPSPlayer::Vertical);
+	// 델리게이트를 이용한 컴포넌트에서 입력 바인딩 처리 호출
+	onInputBindingDelegate.Broadcast(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction(TEXT("Jump"), IE_Pressed, this, &ATPSPlayer::InputJump);
-	PlayerInputComponent->BindAction(TEXT("Fire"), IE_Pressed, this, &ATPSPlayer::InputFire);
-	PlayerInputComponent->BindAction(TEXT("GrenadeGun"), IE_Pressed, this, &ATPSPlayer::ChangeToGrenadeGun);
-	PlayerInputComponent->BindAction(TEXT("SniperGun"), IE_Pressed, this, &ATPSPlayer::ChangeToSniperGun);
-	PlayerInputComponent->BindAction(TEXT("Sniper"), IE_Pressed, this, &ATPSPlayer::SniperAim);
-	PlayerInputComponent->BindAction(TEXT("Sniper"), IE_Released, this, &ATPSPlayer::SniperAim);
-	PlayerInputComponent->BindAction(TEXT("Run"), IE_Pressed, this, &ATPSPlayer::InputRun);
-}
-
-void ATPSPlayer::Turn(float value)
-{
-	AddControllerYawInput(value);
-}
-
-void ATPSPlayer::LookUp(float value)
-{
-	AddControllerPitchInput(value);
-}
-
-void ATPSPlayer::Horizontal(float value)
-{
-	direction.Y = value;
-}
-
-void ATPSPlayer::Vertical(float value)
-{
-	direction.X = value;
-}
-
-void ATPSPlayer::InputJump()
-{
-	Jump();
-}
-
-void ATPSPlayer::Move()
-{
-	direction = FTransform(GetControlRotation()).TransformVector(direction);
-	// 컨트롤러의 방향으로 이동 하므로 밑의 설정은 스킵됨.
-//	FVector P0 = GetActorLocation();
-//	FVector vt = direction * walkSpeed * DeltaTime;
-//	FVector P = P0 + vt;
-//	SetActorLocation(P);
-	AddMovementInput(direction);
-	direction = FVector::ZeroVector;
-}
-
-void ATPSPlayer::InputFire()
-{
-	UGameplayStatics::PlaySound2D(GetWorld(), bulletSound);
-
-	// 카메라 셰이크 재생
-	auto controller = GetWorld()->GetFirstPlayerController();
-	controller->PlayerCameraManager->StartCameraShake(cameraShake);
-
-	// 공격 애니메이션 재생
-	auto anim = Cast<UPlayerAnim>(GetMesh()->GetAnimInstance());
-	anim->PlayAttackAnim();
-
-	// 유탄 총 사용 시
-	if (bUSingGrenadeGun)
-	{
-		FTransform firePosition = gunMeshComp->GetSocketTransform(TEXT("FirePosition"));
-		GetWorld()->SpawnActor<ABullet>(bulletFactory, firePosition);
-	}
-	// 스나이퍼 사용 시 
-	else 
-	{
-
-		FVector startPos = cameraComp->GetComponentLocation();
-		FVector endPos = cameraComp->GetComponentLocation() + cameraComp->GetForwardVector() * 5000;
-		// linetrace의 충돌 정보를 담을 변수
-		FHitResult hitInfo;
-		// 충돌 옵션 설정 변수
-		FCollisionQueryParams params;
-		// 자기 자신은 충돌에서 제외
-		params.AddIgnoredActor(this);
-		// channel 필터를 이용한 linetrace 충돌 검출(충돌정보, 시작,종료 위치, 검출채널, 충돌옵션)
-		bool bHit = GetWorld()->LineTraceSingleByChannel(hitInfo, startPos, endPos, ECC_Visibility, params);
-
-		if (bHit)
-		{
-			FTransform bulletTrans;
-			// 부딪힌 위치 할당
-			bulletTrans.SetLocation(hitInfo.ImpactPoint);
-			// 총알 파편 효과 인스턴스 생성
-			UGameplayStatics::SpawnEmitterAtLocation(GetWorld(), bulletEffectFactroy, bulletTrans);
-
-			auto hitComp = hitInfo.GetComponent();
-			// 1. 컴포넌트에 물리적용이 되어있다면
-			if (hitComp && hitComp->IsSimulatingPhysics())
-			{
-				// 2. 날려버릴 힘과 방향이 필요
-				FVector force = -hitInfo.ImpactNormal * hitComp->GetMass();
-				// 3. 그 방향으로 날림
-				hitComp->AddForce(force);
-			}
-			// 부딪힌 대상이 적인지 판단
-			auto enemy = hitInfo.GetActor()->GetDefaultSubobjectByName(TEXT("FSM"));
-			if (enemy)
-			{
-				auto enemyFSM = Cast<UEnemyFSM>(enemy);
-					enemyFSM->OnDamageProcess();
-			}
-
-		}
-	}
-	
-}
-
-
-void ATPSPlayer::ChangeToGrenadeGun()
-{
-	if (bSniperAim != true)
-	{
-		bUSingGrenadeGun = true;
-		sniperGunComp->SetVisibility(false);
-		gunMeshComp->SetVisibility(true);
-	}
-}
-
-void ATPSPlayer::ChangeToSniperGun()
-{
-	bUSingGrenadeGun = false;
-	sniperGunComp->SetVisibility(true);
-	gunMeshComp->SetVisibility(false);
-}
-
-void ATPSPlayer::SniperAim()
-{
-	// sniper mode 가 아니면 처리 안함
-	if (bUSingGrenadeGun)
-	{
-		return;
-	}
-	// Pressed 입력 처리
-	if (bSniperAim == false)
-	{
-		bSniperAim = true;
-		_sniperUI->AddToViewport();
-		cameraComp->SetFieldOfView(45.0f);
-		// 4. 일반 조준 ui 제거
-		_crosshairUI->RemoveFromParent();
-	}
-	// Released 입력 처리
-	else 
-	{
-		bSniperAim = false;
-		_sniperUI->RemoveFromParent();
-		cameraComp->SetFieldOfView(90.0f);
-		// 4. 일반 조준 ui 등록
-		_crosshairUI->AddToViewport();
-	}
-}
-
-void ATPSPlayer::InputRun()
-{
-	auto movement = GetCharacterMovement();
-	// 현재 달리기 모드라면
-	if (movement->MaxWalkSpeed > walkSpeed)
-	{
-		movement->MaxWalkSpeed = walkSpeed;
-	}
-	else
-	{
-		movement->MaxWalkSpeed = runSpeed;
-	}
+	// 컴포넌트에서 입력 바인딩 처리 호출
+//	playerMove->SetupInputBinding(PlayerInputComponent);
+//	playerFire->SetupInputBinding(PlayerInputComponent);
 
 }
 

@@ -201,7 +201,7 @@ void UEnemyFSM::DieState()
 	FVector P = P0 + vt;
 	me->SetActorLocation(P);
 
-	if (P.Z > 200.0f)
+	if (P.Z > 150.0f)
 	{
 		me->Destroy();
 	}

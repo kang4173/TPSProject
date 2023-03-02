@@ -154,7 +154,6 @@ void UEnemyFSM::AttackState()
 	
 	if (currentTime > attackDelayTime)
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 15, FColor::Black, TEXT("ATTACK!!!"));
 		currentTime = 0;
 		anim->bAttackPlay = true;
 	}

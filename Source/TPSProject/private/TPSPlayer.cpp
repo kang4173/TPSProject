@@ -5,9 +5,11 @@
 
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
+#include <Kismet/GameplayStatics.h>
 
 #include "PlayerMove.h"
 #include "PlayerFire.h"
+#include "TPSProject.h"
 
 // Sets default values
 ATPSPlayer::ATPSPlayer()
@@ -63,22 +65,20 @@ ATPSPlayer::ATPSPlayer()
 
 	playerMove = CreateDefaultSubobject<UPlayerMove>(TEXT("PlayerMove"));
 	//playerFire = CreateDefaultSubobject<UPlayerFire>(TEXT("PlayerFire"));
-
 }
 
 // Called when the game starts or when spawned
 void ATPSPlayer::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
+	hp = initialHP;
 }
 
 // Called every frame
 void ATPSPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	
 }
 
 // Called to bind functionality to input
@@ -93,5 +93,22 @@ void ATPSPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent
 //	playerMove->SetupInputBinding(PlayerInputComponent);
 //	playerFire->SetupInputBinding(PlayerInputComponent);
 
+}
+
+void ATPSPlayer::OnHitEvent()
+{
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Red, TEXT("Damaged!!"));
+	hp--;
+	if (hp <= 0)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Purple, TEXT("Player is dead"));
+		OnGameOver();
+	}
+}
+
+void ATPSPlayer::OnGameOver_Implementation()
+{
+	// 게임 오버 시 일시정지
+	UGameplayStatics::SetGamePaused(GetWorld(), true);
 }
 

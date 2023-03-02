@@ -32,5 +32,8 @@ public:
 	// 공격 애니메이션 재생 함수
 	void PlayAttackAnim();
 
+	// 피격 애니메이션 재생 함수
+	UFUNCTION(BlueprintImplementableEvent, Category = FSMEvent)
+	void PlayDamageAnim(FName sectionName);
 
 };
